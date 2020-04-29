@@ -1,0 +1,21 @@
+{
+	"name": "cck/php-excel",
+	"description": "php excel 导入导出",
+	"keywords": ["excel", "csv", "xlsx", "xls", "html", "cck"],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "cck"
+		}
+	],
+	"type": "extension",
+	"require": {
+		"php": ">=7.0",
+		"phpoffice/phpspreadsheet": "^1.3"
+	},
+	"autoload": {
+		"psr-4": {
+			"cck\\excel\\": "./src"
+		}
+	}
+}
