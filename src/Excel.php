@@ -1,4 +1,5 @@
 <?php
+
 namespace cck\excel;
 
 use Exception;
@@ -31,7 +32,7 @@ class Excel
      */
     public static function exportData($list = [], $header = [], $filename = '', $suffix = 'xlsx', $path = '')
     {
-        if (!is_array ($list) || !is_array ($header)) {
+        if (!is_array($list) || !is_array($header)) {
             return false;
         }
 
@@ -54,13 +55,13 @@ class Excel
         // 开始写入内容
         $column = 2;
         $size = ceil(count($list) / 500);
-        for($i = 0; $i < $size; $i++) {
+        for ($i = 0; $i < $size; $i++) {
             $buffer = array_slice($list, $i * 500, 500);
 
-            foreach($buffer as $k => $row) {
+            foreach ($buffer as $k => $row) {
                 $span = 1;
 
-                foreach($header as $key => $value) {
+                foreach ($header as $key => $value) {
                     // 解析字段
                     $realData = self::formatting($header[$key], trim(self::formattingField($row, $value[1])), $row);
                     // 写入excel
@@ -74,60 +75,73 @@ class Excel
         }
 
         // 直接输出下载
-        switch ($suffix)
-        {
+        switch ($suffix) {
             case 'xlsx' :
+                $saveFile = $filename . ".xlsx";
                 $writer = new Xlsx($spreadsheet);
                 if (!empty($path)) {
-                    $writer->save($path);
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
                 } else {
                     header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8;");
-                    header("Content-Disposition: inline;filename=\"{$filename}.xlsx\"");
+                    header("Content-Disposition: inline;filename=\"{$saveFile}\"");
                     header('Cache-Control: max-age=0');
                     $writer->save('php://output');
+                    exit();
                 }
-                exit();
-
                 break;
             case 'xls' :
+                $saveFile = $filename . ".xls";
                 $writer = new Xls($spreadsheet);
                 if (!empty($path)) {
-                    $writer->save($path);
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
                 } else {
                     header("Content-Type:application/vnd.ms-excel;charset=utf-8;");
-                    header("Content-Disposition:inline;filename=\"{$filename}.xls\"");
+                    header("Content-Disposition:inline;filename=\"{$saveFile}\"");
                     header('Cache-Control: max-age=0');
                     $writer->save('php://output');
+                    exit();
                 }
-                exit();
-
                 break;
             case 'csv' :
+                $saveFile = $filename . ".csv";
                 $writer = new Csv($spreadsheet);
                 if (!empty($path)) {
-                    $writer->save($path);
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
                 } else {
                     header("Content-type:text/csv;charset=utf-8;");
-                    header("Content-Disposition:attachment; filename={$filename}.csv");
+                    header("Content-Disposition:attachment; filename={$saveFile}");
                     header('Cache-Control: max-age=0');
                     $writer->save('php://output');
+                    exit();
                 }
-                exit();
-
                 break;
             case 'html' :
+                $saveFile = $filename . ".html";
                 $writer = new Html($spreadsheet);
                 if (!empty($path)) {
-                    $writer->save($path);
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
                 } else {
                     header("Content-Type:text/html;charset=utf-8;");
-                    header("Content-Disposition:attachment;filename=\"{$filename}.{$suffix}\"");
+                    header("Content-Disposition:attachment;filename=\"{$saveFile}\"");
                     header('Cache-Control: max-age=0');
                     $writer->save('php://output');
+                    exit();
                 }
-                exit();
-
                 break;
+            default:
+                return false;
         }
 
         return true;
@@ -143,7 +157,7 @@ class Excel
      */
     public static function exportCsvData($list = [], $header = [], $filename = '')
     {
-        if (!is_array ($list) || !is_array ($header)) {
+        if (!is_array($list) || !is_array($header)) {
             return false;
         }
 
@@ -154,7 +168,7 @@ class Excel
         !$filename && $filename = time();
 
         $html = "\xEF\xBB\xBF";
-        foreach($header as $k => $v) {
+        foreach ($header as $k => $v) {
             $html .= $v[0] . "\t ,";
         }
 
@@ -164,13 +178,13 @@ class Excel
             $info = [];
             $size = ceil(count($list) / 500);
 
-            for($i = 0; $i < $size; $i++) {
+            for ($i = 0; $i < $size; $i++) {
                 $buffer = array_slice($list, $i * 500, 500);
 
-                foreach($buffer as $k => $row) {
+                foreach ($buffer as $k => $row) {
                     $data = [];
 
-                    foreach($header as $key => $value) {
+                    foreach ($header as $key => $value) {
                         // 解析字段
                         $realData = self::formatting($header[$key], trim(self::formattingField($row, $value[1])), $row);
                         $data[] = str_replace(PHP_EOL, '', $realData);
@@ -237,7 +251,7 @@ class Excel
                 // $arr[$currentRow] = array_filter($arr[$currentRow]);
                 // 统计连续空行
                 if (empty($arr[$currentRow]) && $emptyRowNum <= 50) {
-                    $emptyRowNum++ ;
+                    $emptyRowNum++;
                 } else {
                     $emptyRowNum = 0;
                 }
@@ -255,7 +269,7 @@ class Excel
         $returnData = $excleDatas ? array_shift($excleDatas) : [];
 
         // 第一行数据就是空的，为了保留其原始数据，第一行数据就不做array_fiter操作；
-        $returnData = $returnData && isset($returnData[$startRow]) && !empty($returnData[$startRow])  ? array_filter($returnData) : $returnData;
+        $returnData = $returnData && isset($returnData[$startRow]) && !empty($returnData[$startRow]) ? array_filter($returnData) : $returnData;
         return $returnData;
     }
 
@@ -269,8 +283,7 @@ class Excel
     {
         !isset($array[2]) && $array[2] = 'text';
 
-        switch ($array[2])
-        {
+        switch ($array[2]) {
             // 文本
             case 'text' :
                 return $value . "\t";
@@ -281,7 +294,7 @@ class Excel
                 break;
             // 选择框
             case  'selectd' :
-                return  $array[3][$value] ?? null ;
+                return $array[3][$value] ?? null;
                 break;
             // 匿名函数
             case  'function' :
