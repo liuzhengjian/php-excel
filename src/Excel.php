@@ -4,6 +4,7 @@ namespace cck\excel;
 
 use Exception;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Html;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
@@ -25,7 +26,8 @@ class Excel
      * @param array $list
      * @param array $header
      * @param string $filename
-     * @param string $title
+     * @param string $suffix
+     * @param string $path 文件保存路径
      * @return bool
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
@@ -51,6 +53,132 @@ class Excel
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($hk) . '1', $v[0]);
             $hk += 1;
         }
+
+        // 开始写入内容
+        $column = 2;
+        $size = ceil(count($list) / 500);
+        for ($i = 0; $i < $size; $i++) {
+            $buffer = array_slice($list, $i * 500, 500);
+
+            foreach ($buffer as $k => $row) {
+                $span = 1;
+
+                foreach ($header as $key => $value) {
+                    // 解析字段
+                    $realData = self::formatting($header[$key], trim(self::formattingField($row, $value[1])), $row);
+                    // 写入excel
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($span) . $column, $realData);
+                    $span++;
+                }
+
+                $column++;
+                unset($buffer[$k]);
+            }
+        }
+
+        // 直接输出下载
+        switch ($suffix) {
+            case 'xlsx' :
+                $saveFile = $filename . ".xlsx";
+                $writer = new Xlsx($spreadsheet);
+                if (!empty($path)) {
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
+                } else {
+                    header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8;");
+                    header("Content-Disposition: inline;filename=\"{$saveFile}\"");
+                    header('Cache-Control: max-age=0');
+                    $writer->save('php://output');
+                    exit();
+                }
+                break;
+            case 'xls' :
+                $saveFile = $filename . ".xls";
+                $writer = new Xls($spreadsheet);
+                if (!empty($path)) {
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
+                } else {
+                    header("Content-Type:application/vnd.ms-excel;charset=utf-8;");
+                    header("Content-Disposition:inline;filename=\"{$saveFile}\"");
+                    header('Cache-Control: max-age=0');
+                    $writer->save('php://output');
+                    exit();
+                }
+                break;
+            case 'csv' :
+                $saveFile = $filename . ".csv";
+                $writer = new Csv($spreadsheet);
+                if (!empty($path)) {
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
+                } else {
+                    header("Content-type:text/csv;charset=utf-8;");
+                    header("Content-Disposition:attachment; filename={$saveFile}");
+                    header('Cache-Control: max-age=0');
+                    $writer->save('php://output');
+                    exit();
+                }
+                break;
+            case 'html' :
+                $saveFile = $filename . ".html";
+                $writer = new Html($spreadsheet);
+                if (!empty($path)) {
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
+                    $writer->save($path . $saveFile);
+                } else {
+                    header("Content-Type:text/html;charset=utf-8;");
+                    header("Content-Disposition:attachment;filename=\"{$saveFile}\"");
+                    header('Cache-Control: max-age=0');
+                    $writer->save('php://output');
+                    exit();
+                }
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 通过模板导出Excel
+     *
+     * @param $tempFile
+     * @param array $list
+     * @param array $header
+     * @param string $filename
+     * @param string $suffix
+     * @param string $path 文件保存路径
+     * @return bool
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     */
+    public static function exportDataFromTemplate($tempFile,
+                                                  $list = [], $header = [], $filename = '', $suffix = 'xlsx', $path = '')
+    {
+        if (!is_array($list) || !is_array($header)) {
+            return false;
+        }
+
+        // 清除之前的错误输出
+        ob_end_clean();
+        ob_start();
+
+        !$filename && $filename = time();
+
+        // 初始化
+        $spreadsheet = IOFactory::load($tempFile);
+        $sheet = $spreadsheet->setActiveSheetIndex(0);
 
         // 开始写入内容
         $column = 2;
