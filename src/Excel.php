@@ -180,6 +180,11 @@ class Excel
         $spreadsheet = IOFactory::load($tempFile);
         $sheet = $spreadsheet->setActiveSheetIndex(0);
 
+        $allRow = $sheet->getHighestRow();
+        for ($n = 2; $n <= $allRow; $n++){
+            $sheet->removeRow($n);
+        }
+
         // 开始写入内容
         $column = 2;
         $size = ceil(count($list) / 500);
