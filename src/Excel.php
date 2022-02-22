@@ -156,6 +156,7 @@ class Excel
      * @param array $list
      * @param array $header
      * @param string $filename
+     * @param string $sheetName
      * @param string $suffix
      * @param string $path 文件保存路径
      * @return bool
@@ -164,7 +165,9 @@ class Excel
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     public static function exportDataFromTemplate($tempFile,
-                                                  $list = [], $header = [], $filename = '', $suffix = 'xlsx', $path = '')
+                                                  $list = [],
+                                                  $header = [],
+                                                  $filename = '', $sheetName = '', $suffix = 'xlsx', $path = '')
     {
         if (!is_array($list) || !is_array($header)) {
             return false;
@@ -178,11 +181,20 @@ class Excel
 
         // 初始化
         $spreadsheet = IOFactory::load($tempFile);
+        $spreadsheet->removeSheetByIndex(0);
+        $spreadsheet->createSheet(0)->setTitle($sheetName ?: 'Sheet1');
         $sheet = $spreadsheet->setActiveSheetIndex(0);
 
-        $allRow = $sheet->getHighestRow();
+        /*$allRow = $sheet->getHighestRow();
         for ($n = 2; $n <= $allRow; $n++){
             $sheet->removeRow($n);
+        }*/
+
+        // 写入头部
+        $hk = 1;
+        foreach ($header as $k => $v) {
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($hk) . '1', $v[0]);
+            $hk += 1;
         }
 
         // 开始写入内容
