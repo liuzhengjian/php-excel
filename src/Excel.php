@@ -167,7 +167,7 @@ class Excel
     public static function exportDataFromTemplate($tempFile,
                                                   $list = [],
                                                   $header = [],
-                                                  $filename = '', $sheetName = '', $suffix = 'xlsx', $path = '')
+                                                  $filename = '', $suffix = 'xlsx', $path = '')
     {
         if (!is_array($list) || !is_array($header)) {
             return false;
@@ -181,8 +181,9 @@ class Excel
 
         // 初始化
         $spreadsheet = IOFactory::load($tempFile);
+        $sheetName = $spreadsheet->getSheet(0)->getTitle();
         $spreadsheet->removeSheetByIndex(0);
-        $spreadsheet->createSheet(0)->setTitle($sheetName ?: 'Sheet1');
+        $spreadsheet->createSheet(0)->setTitle($sheetName);
         $sheet = $spreadsheet->setActiveSheetIndex(0);
 
         /*$allRow = $sheet->getHighestRow();
